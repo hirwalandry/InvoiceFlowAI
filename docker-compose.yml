@@ -1,0 +1,97 @@
+﻿version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: invoiceflow-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Kanakuze@12345
+      POSTGRES_DB: InvoiceFlowAI
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d InvoiceFlowAI"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: invoiceflow-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: invoiceflow-api
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:Kanakuze%4012345@postgres:5432/InvoiceFlowAI
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: super-secret-key-change-in-production
+      UPLOAD_DIR: /app/uploads
+      MAX_UPLOAD_SIZE: 10485760
+      ALLOWED_EXTENSIONS: pdf,jpg,jpeg,png
+      ENVIRONMENT: development
+      USE_LLM_EXTRACTION: "true"
+      EXTRACTION_MODEL: openai/gpt-oss-20b
+      GROQ_API_KEY: ""
+      LLM_API_KEY: ""
+      LLM_BASE_URL: ""
+      FORCE_LOW_CONFIDENCE: "false"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - upload_data:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: invoiceflow-celery
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:Kanakuze%4012345@postgres:5432/InvoiceFlowAI
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: super-secret-key-change-in-production
+      UPLOAD_DIR: /app/uploads
+      MAX_UPLOAD_SIZE: 10485760
+      ALLOWED_EXTENSIONS: pdf,jpg,jpeg,png
+      ENVIRONMENT: development
+      USE_LLM_EXTRACTION: "true"
+      EXTRACTION_MODEL: openai/gpt-oss-20b
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      FORCE_LOW_CONFIDENCE: "false"
+    volumes:
+      - ./backend:/app
+      - upload_data:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A app.workers.celery_app worker --loglevel=info
+
+volumes:
+  postgres_data:
+  redis_data:
+  upload_data:

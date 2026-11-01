@@ -1,0 +1,34 @@
+[tool.poetry]
+name = "invoiceflowai-backend"
+version = "0.1.0"
+description = "InvoiceFlowAI Backend"
+authors = ["InvoiceFlowAI"]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.115.0"
+uvicorn = {extras = ["standard"], version = "^0.32.0"}
+python-multipart = "^0.0.17"
+pydantic = "^2.9.0"
+pydantic-settings = "^2.6.0"
+sqlalchemy = "^2.0.36"
+alembic = "^1.14.0"
+psycopg2-binary = "^2.9.10"
+redis = "^5.2.0"
+celery = "^5.4.0"
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+aiofiles = "^24.1.0"
+pillow = "^11.0.0"
+pytesseract = "^0.3.13"
+pdfplumber = "^0.11.4"
+httpx = "^0.27.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.0"
+pytest-asyncio = "^0.24.0"
+playwright = "^1.48.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
