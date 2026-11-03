@@ -94,19 +94,6 @@ curl -H "Authorization: Bearer <token>" \
 
 ---
 
-## Key Files (for demo/video)
-
-| Check | Location |
-|---|---|
-| Financial totals | `backend/app/services/extraction_service.py:149-191` |
-| Required fields | `backend/app/services/extraction_service.py:217-232` |
-| Duplicate invoice | `backend/app/services/processing_service.py:48-73` |
-| PO reference | `backend/app/services/processing_service.py:75-86` |
-| Review trigger | `backend/app/services/processing_service.py:125-128` |
-| Audit log | `backend/app/services/processing_service.py:130-141` |
-
----
-
 ## Configuration
 
 `backend/.env`:
