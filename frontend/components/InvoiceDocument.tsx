@@ -233,7 +233,7 @@ console.log('InvoiceDocument items:', fields);
       </div>
       {termsAndConditions && (
         <div className="mt-6 border-t-2 border-ink-400/50 pt-4">
-          <dt className="font-semibold text-ink-900">Terms &amp; Conditions</dt>
+          <dt className="font-semibold text-ink-900">Terms & Conditions</dt>
           <dd className="text-[11px] text-ink-600">
             <DocumentRegion id="terms_and_conditions" regions={regions} fields={fields}>
               <p>{termsAndConditions}</p>
