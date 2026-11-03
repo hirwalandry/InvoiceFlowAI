@@ -4,13 +4,25 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.core.database import get_db
 from app.core.permissions import require_reviewer, get_current_user
-from app.models.models import Invoice, User
+from app.models.models import Invoice, User, InvoiceStatus
 from jose import jwt, JWTError
 from app.core.config import settings
 import json
 import os
 
 router = APIRouter()
+
+
+@router.get("/invoices/counts")
+def get_invoice_counts(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    review_count = db.query(Invoice).filter(
+        Invoice.organization_id == current_user.organization_id,
+        Invoice.status == InvoiceStatus.REVIEW
+    ).count()
+    return {"review": review_count}
 
 @router.get("/invoices")
 def list_invoices(

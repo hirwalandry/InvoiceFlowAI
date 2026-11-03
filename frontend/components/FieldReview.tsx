@@ -103,19 +103,27 @@ export function FieldReview({ field, value, status, onAccept, onSave }: FieldRev
                 {resolvedLabel[status]}
               </span>
           }
-            <Button
+           <div className="group relative">  <Button
             size="sm"
+            disabled={true}
             onClick={() => {
               setDraft(value);
               setIsEditing(true);
             }}>
             
               Edit value
-            </Button>
+            </Button><div className="pointer-events-none absolute -top-9 right-0 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+            change values integration coming soon
+            <div className="absolute -bottom-1 right-3 h-2 w-2 rotate-45 bg-gray-900"></div>
+          </div></div>
             {status === 'needsReview' &&
-          <Button size="sm" variant="primary" onClick={onAccept} className="min-w-[88px]">
+          <div className="group relative"> <Button size="sm" disabled={true}  onClick={onAccept} className="bg-blue-500 text-white hover:bg-blue-400 min-w-[88px]">
                 Accept
-              </Button>
+              </Button> <div className="pointer-events-none absolute -top-9 right-0 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+            change values integration coming soon
+            <div className="absolute -bottom-1 right-3 h-2 w-2 rotate-45 bg-gray-900"></div>
+          </div></div>
+              
           }
           </>
         }

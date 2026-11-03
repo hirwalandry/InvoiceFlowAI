@@ -44,20 +44,22 @@ export function ActionBar({ needsReviewCount, syncState, onApprove, onExport }: 
           <FileTextIcon aria-hidden className="h-4 w-4 text-ink-500" />
           Export PDF
         </Button>
-        <Button
-          variant="primary"
-          onClick={onApprove}
-          disabled={blocked || syncState !== 'idle'}
-          aria-describedby={blocked ? 'approve-hint' : undefined}
-          className={syncState === 'synced' ? 'disabled:bg-success-500' : ''}>
-          
-          {syncState === 'syncing' && <Loader2Icon aria-hidden className="h-4 w-4 animate-spin" />}
-          {syncState === 'synced' && <CheckIcon aria-hidden className="h-4 w-4" />}
-          {syncState === 'idle' && 'Approve & Sync to QuickBooks'}
-          {syncState === 'syncing' && 'Syncing to QuickBooks…'}
-          {syncState === 'synced' && 'Synced to QuickBooks'}
-        </Button>
+        <div className="group relative">
+          <Button
+            variant="primary"
+            onClick={onApprove}
+            disabled={true}
+            aria-describedby="quickbooks-soon"
+            className="cursor-not-allowed bg-gray-300 text-gray-600 opacity-70 hover:bg-gray-300">
+            Approve & Sync to QuickBooks
+          </Button>
+          <div className="pointer-events-none absolute -top-9 right-0 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+            QuickBooks integration coming soon
+            <div className="absolute -bottom-1 right-3 h-2 w-2 rotate-45 bg-gray-900"></div>
+          </div>
+        </div>
       </div>
-    </footer>);
+    </footer>
+  );
 
 }

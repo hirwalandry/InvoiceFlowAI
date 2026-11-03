@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { FileTextIcon, MinusIcon, PlusIcon, ScanIcon } from 'lucide-react';
 import { InvoiceDocument } from './InvoiceDocument';
 import type { RegionHandlers, ExtractedField } from '../types/invoice';
+import { API_ENDPOINTS } from '../config/api';
 
 interface DocumentViewerProps {
   regions: RegionHandlers;
@@ -19,7 +20,6 @@ export function DocumentViewer({ regions, invoiceId }: DocumentViewerProps) {
   const [invoice, setInvoice] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
     if (!invoiceId) {
       setInvoice(null);
@@ -29,7 +29,7 @@ export function DocumentViewer({ regions, invoiceId }: DocumentViewerProps) {
     setLoading(true);
     setError(null);
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    fetch(`http://localhost:8000/api/invoices/${invoiceId}`, {
+    fetch(API_ENDPOINTS.invoices.byId(invoiceId), {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
       .then((res) => {

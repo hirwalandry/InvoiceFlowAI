@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MailIcon, LockIcon, EyeIcon, EyeOffIcon } from 'lucide-react';
 import { Button } from '../../components/Button';
+import { API_ENDPOINTS } from '../../config/api';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,15 +21,20 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     try {
-      const res = await fetch('http://localhost:8000/api/auth/login', {
+      const res = await fetch(API_ENDPOINTS.auth.login, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: formData.email,
           password: formData.password
-        })
+        }),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
       const data = await res.json();
       if (res.ok) {
         localStorage.setItem('token', data.access_token);
@@ -36,8 +42,13 @@ export default function LoginPage() {
       } else {
         setError(data.detail || 'Login failed');
       }
-    } catch (err) {
-      setError('Network error - backend may be down');
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        setError('Request timed out. Is the backend running on http://localhost:8000?');
+      } else {
+        setError('Network error - backend may be down');
+      }
     } finally {
       setLoading(false);
     }

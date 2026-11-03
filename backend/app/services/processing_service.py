@@ -94,88 +94,88 @@ class ProcessingService:
         self.extractor = ExtractionService()
     
     async def process_invoice(self, db: Session, invoice_id: str):
-        invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
-        if not invoice:
-            return
-        
-        invoice.status = InvoiceStatus.PROCESSING
-        db.commit()
-        
-        try:
-            file_path = invoice.file_path
-            raw_text, bboxes = self.ocr.extract_text(file_path)
-            
-            result = await self.extractor.extract(raw_text, invoice_id)
-            
-            invoice.extracted_data = result.model_dump_json()
-            invoice.invoice_number = None
-            invoice.vendor_name = None
-            
-            for f in result.fields:
-                if f.id == "invoice_number" and f.value:
-                    invoice.invoice_number = f.value
-                if f.id == "vendor_name" and f.value:
-                    invoice.vendor_name = f.value
-                if f.id == "total_due" and f.value:
-                    try:
-                        from decimal import Decimal
-                        invoice.total_amount = Decimal(str(f.value).replace(',', ''))
-                    except:
-                        pass
-                if f.id == "invoice_date" and f.value:
-                    try:
-                        invoice.invoice_date = date.fromisoformat(str(f.value)[:10])
-                    except:
-                        pass
-            
-            for li in result.line_items:
-                if li.description:
-                    line_item = LineItem(
-                        invoice_id=invoice.id,
-                        description=li.description,
-                        quantity=li.quantity or 0,
-                        unit_price=li.unit_price or 0,
-                        amount=li.amount or 0
-                    )
-                    db.add(line_item)
-            
-            db.commit()
-            db.refresh(invoice)
-            
-            validator = ValidationEngine(db)
-            issues = validator.validate(invoice, result)
-            
-            if invoice.extracted_data:
-                ed = json.loads(invoice.extracted_data)
-                ed['validation_issues'] = issues
-                invoice.extracted_data = json.dumps(ed)
-            
-            has_errors = any(i['severity'] == 'error' for i in issues)
-            if has_errors or result.needs_review_count > 0:
-                invoice.status = InvoiceStatus.REVIEW
-            else:
-                invoice.status = InvoiceStatus.REVIEW
-            
-            db.commit()
-            try:
-                audit = AuditLog(
-                    organization_id=invoice.organization_id,
-                    invoice_id=invoice.id,
-                    action="AUTO_EXTRACTED_VALIDATED",
-                    details=f"Extracted with avg confidence {result.average_confidence}%, {len(issues)} validation issues"
-                )
-                db.add(audit)
-                db.commit()
-            except Exception as ae:
-                db.rollback()
-                print(f"Audit log failed: {ae}")
-        except Exception as e:
-            db.rollback()
             invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
-            if invoice:
-                invoice.status = InvoiceStatus.ERROR
-                invoice.processing_error = str(e)
+            if not invoice:
+                return
+        
+            invoice.status = InvoiceStatus.PROCESSING
+            db.commit()
+            
+            try:
+                file_path = invoice.file_path
+                raw_text, bboxes, low_conf_tokens = self.ocr.extract_text(file_path)
+                
+                result = await self.extractor.extract(raw_text, invoice_id, low_conf_tokens)
+                
+                invoice.extracted_data = result.model_dump_json()
+                invoice.invoice_number = None
+                invoice.vendor_name = None
+                
+                for f in result.fields:
+                    if f.id == "invoice_number" and f.value:
+                        invoice.invoice_number = f.value
+                    if f.id == "vendor_name" and f.value:
+                        invoice.vendor_name = f.value
+                    if f.id == "total_due" and f.value:
+                        try:
+                            from decimal import Decimal
+                            invoice.total_amount = Decimal(str(f.value).replace(',', ''))
+                        except:
+                            pass
+                    if f.id == "invoice_date" and f.value:
+                        try:
+                            invoice.invoice_date = date.fromisoformat(str(f.value)[:10])
+                        except:
+                            pass
+                
+                for li in result.line_items:
+                    if li.description:
+                        line_item = LineItem(
+                            invoice_id=invoice.id,
+                            description=li.description,
+                            quantity=li.quantity or 0,
+                            unit_price=li.unit_price or 0,
+                            amount=li.amount or 0
+                        )
+                        db.add(line_item)
+                
                 db.commit()
-            print(f"Error processing invoice {invoice_id}: {e}")
-            raise
+                db.refresh(invoice)
+                
+                validator = ValidationEngine(db)
+                issues = validator.validate(invoice, result)
+                
+                if invoice.extracted_data:
+                    ed = json.loads(invoice.extracted_data)
+                    ed['validation_issues'] = issues
+                    invoice.extracted_data = json.dumps(ed)
+                
+                has_errors = any(i['severity'] == 'error' for i in issues)
+                if has_errors or result.needs_review_count > 0:
+                    invoice.status = InvoiceStatus.REVIEW
+                else:
+                    invoice.status = InvoiceStatus.REVIEW
+                
+                db.commit()
+                try:
+                    audit = AuditLog(
+                        organization_id=invoice.organization_id,
+                        invoice_id=invoice.id,
+                        action="AUTO_EXTRACTED_VALIDATED",
+                        details=f"Extracted with avg confidence {result.average_confidence}%, {len(issues)} validation issues"
+                    )
+                    db.add(audit)
+                    db.commit()
+                except Exception as ae:
+                    db.rollback()
+                    print(f"Audit log failed: {ae}")
+            except Exception as e:
+                db.rollback()
+                invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+                if invoice:
+                    invoice.status = InvoiceStatus.ERROR
+                    invoice.processing_error = str(e)
+                    db.commit()
+                print(f"Error processing invoice {invoice_id}: {e}")
+                raise
 

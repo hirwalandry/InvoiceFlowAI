@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
 from decimal import Decimal
 from datetime import date
@@ -28,6 +28,21 @@ class LineItemExtracted(BaseModel):
     amount: Optional[Decimal] = Field(None, description="Total amount for this line item")
     confidence: float = 90.0
 
+    @field_validator("quantity", "unit_price", "amount", mode="before")
+    @classmethod
+    def _coerce_decimal_fields(cls, v, info):
+        if v is None:
+            return None
+        if isinstance(v, str):
+            s = v.strip().replace(",", "").replace("$", "").replace("€", "").replace("£", "")
+            if s == "" or s.lower() in ("null", "none", "nan"):
+                return None
+            try:
+                return Decimal(s)
+            except Exception:
+                return None
+        return v
+
 class InvoiceExtractionSchema(BaseModel):
     vendor_name: Optional[str] = Field(None, description="Supplier, vendor, or business name issuing the invoice")
     vendor_address: Optional[str] = Field(None, description="Full address of the supplier")
@@ -35,7 +50,7 @@ class InvoiceExtractionSchema(BaseModel):
     invoice_number: Optional[str] = Field(None, description="Invoice or reference number")
     invoice_date: Optional[str] = Field(None, description="Date invoice was issued (YYYY-MM-DD or raw string)")
     due_date: Optional[str] = Field(None, description="Payment due date (YYYY-MM-DD or raw string)")
-    currency: str = Field("USD", description="Currency ISO code or symbol ($/EUR/USD)")
+    currency: Optional[str] = Field("USD", description="Currency ISO code or symbol ($/EUR/USD)")
     subtotal: Optional[Decimal] = Field(None, description="Subtotal amount before tax")
     tax_amount: Optional[Decimal] = Field(None, description="Tax, VAT, GST, or sales tax amount")
     total_due: Optional[Decimal] = Field(None, description="Grand total amount payable")
@@ -49,6 +64,21 @@ class InvoiceExtractionSchema(BaseModel):
     send_payment_address: Optional[str] = Field(None, description="Send payment to address")
     terms_and_conditions: Optional[str] = Field(None, description="Terms and conditions text")
     line_items: List[LineItemExtracted] = Field(default_factory=list)
+
+    @field_validator("subtotal", "tax_amount", "total_due", mode="before")
+    @classmethod
+    def _coerce_decimal_fields(cls, v, info):
+        if v is None:
+            return None
+        if isinstance(v, str):
+            s = v.strip().replace(",", "").replace("$", "").replace("€", "").replace("£", "")
+            if s == "" or s.lower() in ("null", "none", "nan"):
+                return None
+            try:
+                return Decimal(s)
+            except Exception:
+                return None
+        return v
 
 class ValidationResult(BaseModel):
     rule_name: str

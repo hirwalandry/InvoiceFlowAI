@@ -53,7 +53,7 @@ class OCRService:
                                     "height": w.get("bottom", 0) - w.get("top", 0),
                                     "page": page_num
                                 })
-                    return "\n\n".join(text_pages), bboxes
+                    return "\n\n".join(text_pages), bboxes, []
                 except Exception as e:
                     print(f"pdfplumber error: {e}")
             
@@ -75,28 +75,41 @@ class OCRService:
                                 "page": page_num + 1
                             })
                     doc.close()
-                    return "\n\n".join(full_text), bboxes
+                    return "\n\n".join(full_text), bboxes, []
                 except Exception as e:
                     print(f"pymupdf error: {e}")
         else:
             if PIL_AVAILABLE and PYTESSERACT_AVAILABLE:
                 try:
                     image = Image.open(file_path)
-                    text = pytesseract.image_to_string(image)
                     data = pytesseract.image_to_data(image, output_type=pytesseract.Output.DICT)
+                    words = []
+                    low_conf_tokens = []
                     for i in range(len(data['text'])):
-                        if data['text'][i].strip():
-                            bboxes.append({
-                                "text": data['text'][i],
+                        txt = data['text'][i].strip()
+                        if not txt:
+                            continue
+                        conf = int(data['conf'][i]) if data['conf'][i] != '-1' else 0
+                        words.append(txt)
+                        if conf < 70:
+                            low_conf_tokens.append({
+                                "text": txt,
+                                "confidence": conf,
                                 "x": data['left'][i],
-                                "y": data['top'][i],
-                                "width": data['width'][i],
-                                "height": data['height'][i],
-                                "page": 1
+                                "y": data['top'][i]
                             })
-                    return text, bboxes
+                        bboxes.append({
+                            "text": txt,
+                            "x": data['left'][i],
+                            "y": data['top'][i],
+                            "width": data['width'][i],
+                            "height": data['height'][i],
+                            "page": 1,
+                            "confidence": conf
+                        })
+                    return " ".join(words), bboxes, low_conf_tokens
                 except Exception as e:
                     print(f"tesseract error: {e}")
         
         # Fallback
-        return "", bboxes
+        return "", [], []

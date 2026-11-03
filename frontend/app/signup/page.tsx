@@ -3,8 +3,9 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { MailIcon, LockIcon, UserIcon, EyeIcon, EyeOffIcon, BuildingIcon } from 'lucide-react';
+import { MailIcon, LockIcon, UserIcon, BuildingIcon, EyeIcon, EyeOffIcon } from 'lucide-react';
 import { Button } from '../../components/Button';
+import { API_ENDPOINTS } from '../../config/api';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -24,7 +25,7 @@ export default function SignupPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('http://localhost:8000/api/auth/signup', {
+      const res = await fetch(API_ENDPOINTS.auth.signup, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

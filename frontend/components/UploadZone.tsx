@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { UploadCloudIcon, FileTextIcon, XIcon } from 'lucide-react';
 import { Button } from './Button';
+import { API_ENDPOINTS } from '../config/api';
 
 export function UploadZone() {
   const [dragActive, setDragActive] = useState(false);
@@ -70,7 +71,7 @@ export function UploadZone() {
         formData.append('files', file);
       });
 
-      const res = await fetch('http://localhost:8000/api/upload', {
+      const res = await fetch(API_ENDPOINTS.upload, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

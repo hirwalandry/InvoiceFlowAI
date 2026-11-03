@@ -1,4 +1,4 @@
-﻿version: '3.8'
+version: '3.8'
 
 services:
   postgres:
@@ -36,6 +36,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: invoiceflow-api
+    env_file:
+      - ./backend/.env
     environment:
       DATABASE_URL: postgresql+psycopg2://postgres:Kanakuze%4012345@postgres:5432/InvoiceFlowAI
       REDIS_URL: redis://redis:6379/0
@@ -46,9 +48,6 @@ services:
       ENVIRONMENT: development
       USE_LLM_EXTRACTION: "true"
       EXTRACTION_MODEL: openai/gpt-oss-20b
-      GROQ_API_KEY: ""
-      LLM_API_KEY: ""
-      LLM_BASE_URL: ""
       FORCE_LOW_CONFIDENCE: "false"
     ports:
       - "8000:8000"
@@ -67,6 +66,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: invoiceflow-celery
+    env_file:
+      - ./backend/.env
     environment:
       DATABASE_URL: postgresql+psycopg2://postgres:Kanakuze%4012345@postgres:5432/InvoiceFlowAI
       REDIS_URL: redis://redis:6379/0
@@ -77,9 +78,6 @@ services:
       ENVIRONMENT: development
       USE_LLM_EXTRACTION: "true"
       EXTRACTION_MODEL: openai/gpt-oss-20b
-      GROQ_API_KEY: ${GROQ_API_KEY:-}
-      LLM_API_KEY: ${LLM_API_KEY:-}
-      LLM_BASE_URL: ${LLM_BASE_URL:-}
       FORCE_LOW_CONFIDENCE: "false"
     volumes:
       - ./backend:/app

@@ -6,6 +6,7 @@ import { invoiceMeta as dummyMeta, REVIEW_THRESHOLD } from "../data/invoice";
 import { downloadFields, type ExportFormat } from "../utils/export";
 import { isWideLayout, scrollToElement } from "../utils/scroll";
 import type { FieldStatus, SyncState } from "../types/invoice";
+import { API_ENDPOINTS } from "../config/api";
 
 export function useInvoiceReview(invoiceId?: string | null) {
   const [invoices, setInvoices] = useState<any[]>([]);
@@ -21,7 +22,7 @@ export function useInvoiceReview(invoiceId?: string | null) {
   const fetchInvoices = useCallback(async () => {
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-      const res = await fetch("http://localhost:8000/api/invoices", {
+      const res = await fetch(API_ENDPOINTS.invoices.list, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (res.ok) {
@@ -37,7 +38,7 @@ export function useInvoiceReview(invoiceId?: string | null) {
     setLoading(true);
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-      const res = await fetch(`http://localhost:8000/api/invoices/${id}`, {
+      const res = await fetch(API_ENDPOINTS.invoices.byId(id), {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (res.ok) {
@@ -57,7 +58,7 @@ export function useInvoiceReview(invoiceId?: string | null) {
           value: fmtNumber(li.amount),
           confidence: 90,
           sourceLabel: "Line item",
-          lineItem: { qty: li.quantity ?? 0, unitPrice: fmtNumber(li.unit_price) },
+          lineItem: { qty: li.quantity, unitPrice: fmtNumber(li.unit_price) },
         }));
         const mapped = [
           ...exFields.map((f: any) => ({

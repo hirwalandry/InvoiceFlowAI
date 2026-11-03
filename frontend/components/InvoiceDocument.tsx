@@ -73,7 +73,7 @@ export function InvoiceDocument({ regions, invoice, fields, lineItems }: Invoice
   const totalDue = invoice?.total_amount ?? null;
 
   const items: InvoiceLineItem[] = lineItems ?? invoice?.line_items ?? [];
-
+console.log('InvoiceDocument items:', fields);
   return (
     <article
       aria-label="Original invoice document"
@@ -100,9 +100,9 @@ export function InvoiceDocument({ regions, invoice, fields, lineItems }: Invoice
           <DocumentRegion id="vendorName" regions={regions} fields={fields} className="w-fit">
             <p className="font-semibold text-ink-900">{vendorName}</p>
           </DocumentRegion>
-          {vendorAddress && (
+          {fields && fields[1].value && (
             <DocumentRegion id="vendorAddress" regions={regions} fields={fields} className="w-fit">
-              <p>{vendorAddress}</p>
+              <p>{fields[1].value}</p>
             </DocumentRegion>
           )}
           {vendorEmail && (
